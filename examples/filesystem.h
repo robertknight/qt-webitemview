@@ -4,13 +4,13 @@
 
 class QUrl;
 
-class TestWebItemView : public QWidget
+class FileSystemView : public QWidget
 {
         Q_OBJECT
         
     public:
-        explicit TestWebItemView(QWidget *parent = 0);
-        ~TestWebItemView();
+        explicit FileSystemView(QWidget *parent = 0);
+        ~FileSystemView();
         
     public Q_SLOTS:
         void openLink(const QUrl&);

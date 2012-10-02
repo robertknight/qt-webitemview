@@ -12,10 +12,11 @@
 #include <QtGui/QDesktopServices>
 
 #include <QtCore/QTime>
+#include <QtCore/QUrl>
 
 #include <QtCore/QDebug>
 
-class TestItemFactory : public WebItemFactory
+class FileTreeItemFactory : public WebItemFactory
 {
     public:
         virtual QString pageHeader();
@@ -24,31 +25,38 @@ class TestItemFactory : public WebItemFactory
         virtual QStringList itemClasses(const QModelIndex &index);
 };
 
-QString TestItemFactory::pageHeader()
+QString FileTreeItemFactory::pageHeader()
 {
-    return QString("<style>.item-selected { font-style:italic; } .header { font-weight: bold; padding:10px; } "
-                   ".item-text { margin : 5px; }</style>");
+    return QString("<style>.header { font-weight: bold; padding: 10px; } "
+                   ".item-text { margin: 5px; text-decoration: none; }</style>");
 }
 
-QString TestItemFactory::itemTemplate(const QModelIndex &)
+QString FileTreeItemFactory::itemTemplate(const QModelIndex & index)
 {
-    return QString("<span data-role='display' class='item-text'></span>");
+	if (index.column() == 0) {
+		QUrl url = QUrl::fromLocalFile(index.data(QFileSystemModel::FilePathRole).toString());
+    	return QString("<a href='%1' class='item-text' data-role='display'></a>").arg(url.toString());
+	} else {
+		return QString("<span data-role='display' class='item-text'></span>");
+	}
 }
 
-int TestItemFactory::itemHeight(const QModelIndex &)
+int FileTreeItemFactory::itemHeight(const QModelIndex &)
 {
-    return 40;
+    return 20;
 }
 
-QStringList TestItemFactory::itemClasses(const QModelIndex &index)
+QStringList FileTreeItemFactory::itemClasses(const QModelIndex &index)
 {
     Q_UNUSED(index);
     return QStringList();
 }
 
-TestWebItemView::TestWebItemView(QWidget *parent) :
+FileSystemView::FileSystemView(QWidget *parent) :
     QWidget(parent)
 {
+	setWindowTitle("File System View");
+
     QTreeView* itemView = new QTreeView(this);
     itemView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     itemView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -56,7 +64,7 @@ TestWebItemView::TestWebItemView(QWidget *parent) :
     QFileSystemModel* model = new QFileSystemModel(this);
     model->setRootPath("/");
 
-    WebItemDelegate* delegate = new WebItemDelegate(new TestItemFactory, this);
+    WebItemDelegate* delegate = new WebItemDelegate(new FileTreeItemFactory, this);
     connect(delegate, SIGNAL(linkClicked(QUrl)), this, SLOT(openLink(QUrl)));
 
     itemView->setModel(model);
@@ -66,21 +74,22 @@ TestWebItemView::TestWebItemView(QWidget *parent) :
     layout->addWidget(itemView);
 }
 
-TestWebItemView::~TestWebItemView()
+FileSystemView::~FileSystemView()
 {
 }
 
-void TestWebItemView::openLink(const QUrl& url)
+void FileSystemView::openLink(const QUrl& url)
 {
     QDesktopServices::openUrl(url);
 }
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
-    TestWebItemView w;
-    w.show();
-    return a.exec();
+    FileSystemView widget;
+	widget.resize(640, 480);
+    widget.show();
+    return app.exec();
 }
 

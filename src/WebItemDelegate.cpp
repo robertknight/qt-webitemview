@@ -64,64 +64,56 @@ void WebItemDelegate::showDebugWebView()
 
 bool WebItemDelegate::eventFilter(QObject *object, QEvent *event)
 {
-    if (m_view && object == m_view->viewport())
-    {
-        switch (event->type())
-        {
-            case QEvent::Resize:
-                m_webPage->setViewportSize(m_view->size());
-                layoutAllDomNodes();
-                break;
-            case QEvent::MouseButtonPress:
-            case QEvent::MouseButtonRelease:
-            case QEvent::MouseButtonDblClick:
-            case QEvent::MouseMove:
-                sendMouseEvent(static_cast<QMouseEvent*>(event));
-                break;
-            case QEvent::Leave:
-                m_webPage->event(event);
-            default:
-                break;
+    if (m_view && object == m_view->viewport()) {
+        switch (event->type()) {
+		case QEvent::Resize:
+			m_webPage->setViewportSize(m_view->size());
+			layoutAllDomNodes();
+			break;
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonRelease:
+		case QEvent::MouseButtonDblClick:
+		case QEvent::MouseMove:
+			sendMouseEvent(static_cast<QMouseEvent*>(event));
+			break;
+		case QEvent::Leave:
+			m_webPage->event(event);
+		default:
+			break;
         }
-    }
-    else if (object == m_view)
-    {
+    } else if (object == m_view) {
         // the view is a focus proxy for the viewport, so m_view rather than m_view->viewport()
         // receives keyboard and focus in/out events
-        switch (event->type())
-        {
-            case QEvent::KeyPress:
-            case QEvent::KeyRelease:
-            {
-                // Avoid events bubbling up to the list view if accepted by a form
-                // element or other control
-                m_webPage->event(event);
-                if (event->isAccepted())
-                {
-                    return true;
-                }
-            }
-                break;
-            case QEvent::FocusIn:
-            case QEvent::FocusOut:
-                m_webPage->event(event);
-                break;
-            default:
-                break;
+        switch (event->type()) {
+		case QEvent::KeyPress:
+		case QEvent::KeyRelease:
+		{
+			// Avoid events bubbling up to the list view if accepted by a form
+			// element or other control
+			m_webPage->event(event);
+			if (event->isAccepted())
+			{
+				return true;
+			}
+		}
+			break;
+		case QEvent::FocusIn:
+		case QEvent::FocusOut:
+			m_webPage->event(event);
+			break;
+		default:
+			break;
         }
-    }
-    else if (object == m_pageView.data())
-    {
-        switch (event->type())
-        {
-            case QEvent::CursorChange:
-                m_view->viewport()->setCursor(m_pageView->cursor());
-                break;
-            case QEvent::ToolTipChange:
-                m_view->viewport()->setToolTip(m_pageView->toolTip());
-                break;
-            default:
-                break;
+    } else if (object == m_pageView.data()) {
+        switch (event->type()) {
+		case QEvent::CursorChange:
+			m_view->viewport()->setCursor(m_pageView->cursor());
+			break;
+		case QEvent::ToolTipChange:
+			m_view->viewport()->setToolTip(m_pageView->toolTip());
+			break;
+		default:
+			break;
         }
     }
     return false;
@@ -151,8 +143,7 @@ void WebItemDelegate::sendMouseEvent(QMouseEvent* event)
 
 void WebItemDelegate::setView(QAbstractItemView *view)
 {
-    if (m_view)
-    {
+    if (m_view) {
         m_view->setItemDelegate(0);
         m_view->removeEventFilter(this);
         m_view->viewport()->removeEventFilter(this);
@@ -163,8 +154,7 @@ void WebItemDelegate::setView(QAbstractItemView *view)
 
     m_view = view;
 
-    if (view)
-    {
+    if (view) {
         view->setItemDelegate(this);
         view->installEventFilter(this);
         view->viewport()->installEventFilter(this);
@@ -238,8 +228,7 @@ void WebItemDelegate::updateItemSizes()
 QWebElement WebItemDelegate::pageStyleElement()
 {
     QWebElement element = m_webPage->mainFrame()->findFirstElement("#page-style");
-    if (element.isNull())
-    {
+    if (element.isNull()) {
         m_webPage->mainFrame()->findFirstElement("HEAD").appendInside("<style id='page-style'></style>");
         return pageStyleElement();
     }
@@ -251,8 +240,7 @@ void WebItemDelegate::modelChanged()
     m_roleNameToValue.clear();
 
     QHashIterator<int, QByteArray> iter(m_view->model()->roleNames());
-    while (iter.hasNext())
-    {
+    while (iter.hasNext()) {
         iter.next();
         m_roleNameToValue.insert(QString(iter.value()), iter.key());
     }
@@ -282,8 +270,7 @@ QSize WebItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
 int WebItemDelegate::itemHeight(const QModelIndex& index) const
 {
     int height = m_itemFactory->itemHeight(index);
-    if (height == -1)
-    {
+    if (height == -1) {
         QWebElement element = const_cast<WebItemDelegate*>(this)->elementForIndex(index);
 
         // force any pending layout updates to be executed
@@ -298,31 +285,25 @@ QString WebItemDelegate::elementId(const QModelIndex& index) const
 {
     QModelIndex parentIndex = index.parent();
     QString id = QString("item_%1_%2").arg(index.row()).arg(index.column());
-    if (parentIndex.isValid())
-    {
+    if (parentIndex.isValid()) {
         return elementId(parentIndex) + '-' + id;
-    }
-    else
-    {
+    } else {
         return id;
     }
 }
 
 QWebElement WebItemDelegate::elementForIndex(const QModelIndex &index, bool createElement) const
 {
-    if (!index.isValid())
-    {
+    if (!index.isValid()) {
         return QWebElement();
     }
 
     QWebElement element = m_visibleIndexElements.value(index);
-    if (element.isNull())
-    {
+    if (element.isNull()) {
         element = m_webPage->mainFrame()->findFirstElement('#' + elementId(index));
     }
 
-    if (element.isNull() && createElement)
-    {
+    if (element.isNull() && createElement) {
         element = const_cast<WebItemDelegate*>(this)->createItem(index);
     }
     return element;
@@ -334,22 +315,17 @@ void WebItemDelegate::updateItemData(QWebElement element, const QModelIndex& ind
     QString roleAttr = element.attribute("data-role-attribute");
 
     int roleId = m_roleNameToValue.value(role, -1);
-    if (roleId != -1)
-    {
+    if (roleId != -1) {
         QString value = index.data(roleId).toString();
-        if (!roleAttr.isEmpty())
-        {
+        if (!roleAttr.isEmpty()) {
             element.setAttribute(roleAttr, value);
-        }
-        else
-        {
+        } else {
             element.setInnerXml(value);
         }
     }
 
     QWebElement child = element.firstChild();
-    while (!child.isNull())
-    {
+    while (!child.isNull()) {
         updateItemData(child, index);
         child = child.nextSibling();
     }
@@ -361,8 +337,7 @@ QWebElement WebItemDelegate::createItem(const QModelIndex& index)
     QString classList = m_itemFactory->itemClasses(index).join(" ");
     QString wrapperHtml = QString("<div class=\"view-item %1\" id=\"%2\">%3</div>").arg(classList).arg(elementId(index)).arg(content);
     QWebElement body = m_webPage->mainFrame()->findFirstElement("body");
-    if (body.isNull())
-    {
+    if (body.isNull()) {
         qDebug() << "Unable to create element";
     }
     body.appendInside(wrapperHtml);
@@ -387,8 +362,7 @@ void WebItemDelegate::drawBackground(
 	const QWidget* widget = viewOption.widget;
 	QStyle* style = widget ? widget->style() : QApplication::style();
 
-	if (style->inherits("QWindowsVistaStyle") && widget)
-	{
+	if (style->inherits("QWindowsVistaStyle") && widget) {
 		// Workaround Qt 4.4.1 - QWindowsVistaStyle only draws a styled item-view background if the
 		// widget passed to drawPrimitive(...PE_PanelItemViewItem...) is a QTreeView or a QListView
 		// with viewMode() == QListView::IconMode
@@ -398,8 +372,7 @@ void WebItemDelegate::drawBackground(
 
 	// Note: Avoid drawing styled background if we don't have a widget as it can cause
 	// crashes in QStyleSheetStyle
-	if (widget)
-	{
+	if (widget) {
 		style->drawPrimitive(QStyle::PE_PanelItemViewItem, &viewOption, painter, widget);
 	}
 }
@@ -408,13 +381,11 @@ QPair<QModelIndex, QModelIndex> WebItemDelegate::visibleIndexes() const
 {
 	const QRect viewportRect = m_view->viewport()->rect();
 	QModelIndex topVisibleIndex = m_view->indexAt(QPoint(0,0));
-	if (!topVisibleIndex.isValid())
-	{
+	if (!topVisibleIndex.isValid()) {
 		return qMakePair(QModelIndex(), QModelIndex());
 	}
 	QModelIndex bottomVisibleIndex = m_view->indexAt(viewportRect.bottomLeft());
-	if (!bottomVisibleIndex.isValid())
-	{
+	if (!bottomVisibleIndex.isValid()) {
 		bottomVisibleIndex = topVisibleIndex.sibling(m_view->model()->rowCount(topVisibleIndex.parent()) - 1, topVisibleIndex.column());
 	}
 
@@ -430,13 +401,11 @@ void WebItemDelegate::webSceneRepaint(const QRect & _webPageRect)
 	// for the model item intersects the dirty area.  If so, repaint that item.
 	QPair<QModelIndex, QModelIndex> visibleIndexes = this->visibleIndexes();
 	QRegion dirtyRegion;
-	for (int i=visibleIndexes.first.row(); i <= visibleIndexes.second.row(); i++)
-	{
+	for (int i=visibleIndexes.first.row(); i <= visibleIndexes.second.row(); i++) {
 		QModelIndex sibling = visibleIndexes.first.sibling(i, visibleIndexes.first.column());
 		QWebElement element = elementForIndex(sibling);
 		QRect itemGeometry = element.geometry();
-		if ((itemGeometry & webPageRect).isValid())
-		{
+		if ((itemGeometry & webPageRect).isValid()) {
 			dirtyRegion |= m_view->visualRect(sibling);
 		}
 	}
@@ -478,8 +447,7 @@ void WebItemDelegate::setDomNodeVisible(QWebElement element, bool visible)
 
 void WebItemDelegate::layoutAllDomNodes()
 {
-	Q_FOREACH(const QModelIndex& index, m_visibleIndexes)
-	{
+	Q_FOREACH(const QModelIndex& index, m_visibleIndexes) {
 		setDomNodeVisible(elementForIndex(index), false);
 	}
 
@@ -489,8 +457,7 @@ void WebItemDelegate::layoutAllDomNodes()
 	QHash<QModelIndex, QWebElement> visibleElementCache;
 	visibleElementCache.reserve(newVisibleIndexes.count());
 
-	Q_FOREACH(const QModelIndex& index, newVisibleIndexes)
-	{
+	Q_FOREACH(const QModelIndex& index, newVisibleIndexes) {
 		QWebElement element = elementForIndex(index);
 		visibleElementCache.insert(index, element);
 
@@ -504,12 +471,10 @@ void WebItemDelegate::layoutAllDomNodes()
 
 void WebItemDelegate::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected)
 {
-	Q_FOREACH(const QModelIndex& index, selected.indexes())
-	{
+	Q_FOREACH(const QModelIndex& index, selected.indexes()) {
 		elementForIndex(index).addClass("item-selected");
 	}
-	Q_FOREACH(const QModelIndex& index, deselected.indexes())
-	{
+	Q_FOREACH(const QModelIndex& index, deselected.indexes()) {
 		elementForIndex(index).removeClass("item-selected");
 	}
 }
@@ -522,15 +487,13 @@ ItemViewLayoutMonitor::ItemViewLayoutMonitor(QAbstractItemView *view, QObject *p
 	QList<QHeaderView*> headerViews;
 
 	QTableView* tableView = qobject_cast<QTableView*>(view);
-	if (tableView)
-	{
+	if (tableView) {
 		headerViews << tableView->horizontalHeader();
 		headerViews << tableView->verticalHeader();
 	}
 
 	QTreeView* treeView = qobject_cast<QTreeView*>(view);
-	if (treeView)
-	{
+	if (treeView) {
 		headerViews << treeView->header();
 
 		connect(treeView, SIGNAL(expanded(QModelIndex)),
@@ -539,8 +502,7 @@ ItemViewLayoutMonitor::ItemViewLayoutMonitor(QAbstractItemView *view, QObject *p
 				this, SIGNAL(visibleItemsChanged()));
 	}
 
-	Q_FOREACH(QHeaderView* header, headerViews)
-	{
+	Q_FOREACH(QHeaderView* header, headerViews) {
 		connect(header, SIGNAL(sectionMoved(int,int,int)),
 				this, SIGNAL(visibleItemsChanged()));
 		connect(header, SIGNAL(sectionResized(int,int,int)),
@@ -557,14 +519,11 @@ QVector<QModelIndex> ItemViewLayoutMonitor::visibleIndexes(const QModelIndex& pa
 	int rowCount = m_view->model()->rowCount(parent);
 	int columnCount = m_view->model()->columnCount(parent);
 
-	for (int row = 0; row < rowCount; row++)
-	{
-		for (int column = 0; column < columnCount; column++)
-		{
+	for (int row = 0; row < rowCount; row++) {
+		for (int column = 0; column < columnCount; column++) {
 			QModelIndex index = m_view->model()->index(row, column, parent);
 			indexes << index;
-			if (treeView && treeView->isExpanded(index))
-			{
+			if (treeView && treeView->isExpanded(index)) {
 				indexes += visibleIndexes(index);
 			}
 		}

@@ -59,13 +59,13 @@ class ItemViewLayoutMonitor : public QObject
 /** A delegate which renders item-view items using elements from
   * a web page.
   */
-class WebItemViewDelegate : public QStyledItemDelegate
+class WebItemDelegate : public QStyledItemDelegate
 {
         Q_OBJECT
 
     public:
-        WebItemViewDelegate(WebItemFactory* itemFactory, QObject* parent = 0);
-        virtual ~WebItemViewDelegate();
+        WebItemDelegate(WebItemFactory* itemFactory, QObject* parent = 0);
+        virtual ~WebItemDelegate();
 
         /** Set the view whoose items should be drawn by this delegate.
           * The delegate will install itself as the view's item delegate.

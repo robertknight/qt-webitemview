@@ -55,7 +55,7 @@ TestWebItemView::TestWebItemView(QWidget *parent) :
     QFileSystemModel* model = new QFileSystemModel(this);
     model->setRootPath("/");
 
-    WebItemViewDelegate* delegate = new WebItemViewDelegate(new TestItemFactory, this);
+    WebItemDelegate* delegate = new WebItemDelegate(new TestItemFactory, this);
     connect(delegate, SIGNAL(linkClicked(QUrl)), this, SLOT(openLink(QUrl)));
 
     itemView->setModel(model);

@@ -21,7 +21,7 @@ QStringList WebItemFactory::itemClasses(const QModelIndex &index)
     return QStringList();
 }
 
-WebItemViewDelegate::WebItemViewDelegate(WebItemFactory* factory, QObject *parent)
+WebItemDelegate::WebItemDelegate(WebItemFactory* factory, QObject *parent)
     : QStyledItemDelegate(parent)
     , m_itemFactory(factory)
     , m_webPage(new QWebPage(this))
@@ -52,17 +52,17 @@ WebItemViewDelegate::WebItemViewDelegate(WebItemFactory* factory, QObject *paren
     m_pageView->installEventFilter(this);
 }
 
-WebItemViewDelegate::~WebItemViewDelegate()
+WebItemDelegate::~WebItemDelegate()
 {
     m_webPage->setView(0);
 }
 
-void WebItemViewDelegate::showDebugWebView()
+void WebItemDelegate::showDebugWebView()
 {
     m_pageView->show();
 }
 
-bool WebItemViewDelegate::eventFilter(QObject *object, QEvent *event)
+bool WebItemDelegate::eventFilter(QObject *object, QEvent *event)
 {
     if (m_view && object == m_view->viewport())
     {
@@ -127,7 +127,7 @@ bool WebItemViewDelegate::eventFilter(QObject *object, QEvent *event)
     return false;
 }
 
-QPoint WebItemViewDelegate::mapToWebPageViewportPos(const QPoint& pos)
+QPoint WebItemDelegate::mapToWebPageViewportPos(const QPoint& pos)
 {
     QModelIndex index = m_view->indexAt(pos);
     QRect itemRect = m_view->visualRect(index);
@@ -138,18 +138,18 @@ QPoint WebItemViewDelegate::mapToWebPageViewportPos(const QPoint& pos)
     return webPagePos;
 }
 
-QPoint WebItemViewDelegate::mapToWebPagePos(const QPoint& pos)
+QPoint WebItemDelegate::mapToWebPagePos(const QPoint& pos)
 {
     return mapToWebPageViewportPos(pos) + m_webPage->mainFrame()->scrollPosition();
 }
 
-void WebItemViewDelegate::sendMouseEvent(QMouseEvent* event)
+void WebItemDelegate::sendMouseEvent(QMouseEvent* event)
 {
     QMouseEvent pageEvent(event->type(), mapToWebPageViewportPos(event->pos()), event->button(), event->buttons(), event->modifiers());
     m_webPage->event(&pageEvent);
 }
 
-void WebItemViewDelegate::setView(QAbstractItemView *view)
+void WebItemDelegate::setView(QAbstractItemView *view)
 {
     if (m_view)
     {
@@ -188,17 +188,17 @@ void WebItemViewDelegate::setView(QAbstractItemView *view)
     }
 }
 
-void WebItemViewDelegate::viewDestroyed()
+void WebItemDelegate::viewDestroyed()
 {
     m_view = 0;
 }
 
-void WebItemViewDelegate::addJavaScriptObject(const QString &name, QObject *object)
+void WebItemDelegate::addJavaScriptObject(const QString &name, QObject *object)
 {
     m_webPage->mainFrame()->addToJavaScriptWindowObject(name, object);
 }
 
-void WebItemViewDelegate::updatePageStyle()
+void WebItemDelegate::updatePageStyle()
 {
     QWebElement styleElement = pageStyleElement();
 
@@ -229,13 +229,13 @@ void WebItemViewDelegate::updatePageStyle()
     styleElement.setPlainText(selectors.join("\n"));
 }
 
-void WebItemViewDelegate::updateItemSizes()
+void WebItemDelegate::updateItemSizes()
 {
     // doItemsLayout() is public but not documented.
     m_view->doItemsLayout();
 }
 
-QWebElement WebItemViewDelegate::pageStyleElement()
+QWebElement WebItemDelegate::pageStyleElement()
 {
     QWebElement element = m_webPage->mainFrame()->findFirstElement("#page-style");
     if (element.isNull())
@@ -246,7 +246,7 @@ QWebElement WebItemViewDelegate::pageStyleElement()
     return element;
 }
 
-void WebItemViewDelegate::modelChanged()
+void WebItemDelegate::modelChanged()
 {
     m_roleNameToValue.clear();
 
@@ -258,7 +258,7 @@ void WebItemViewDelegate::modelChanged()
     }
 }
 
-void WebItemViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void WebItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     drawBackground(painter, option, index);
 
@@ -271,7 +271,7 @@ void WebItemViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     painter->restore();
 }
 
-QSize WebItemViewDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+QSize WebItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     Q_UNUSED(option);
 
@@ -279,12 +279,12 @@ QSize WebItemViewDelegate::sizeHint(const QStyleOptionViewItem &option, const QM
     return QSize(width, itemHeight(index));
 }
 
-int WebItemViewDelegate::itemHeight(const QModelIndex& index) const
+int WebItemDelegate::itemHeight(const QModelIndex& index) const
 {
     int height = m_itemFactory->itemHeight(index);
     if (height == -1)
     {
-        QWebElement element = const_cast<WebItemViewDelegate*>(this)->elementForIndex(index);
+        QWebElement element = const_cast<WebItemDelegate*>(this)->elementForIndex(index);
 
         // force any pending layout updates to be executed
         element.styleProperty("height", QWebElement::ComputedStyle);
@@ -294,7 +294,7 @@ int WebItemViewDelegate::itemHeight(const QModelIndex& index) const
     return height;
 }
 
-QString WebItemViewDelegate::elementId(const QModelIndex& index) const
+QString WebItemDelegate::elementId(const QModelIndex& index) const
 {
     QModelIndex parentIndex = index.parent();
     QString id = QString("item_%1_%2").arg(index.row()).arg(index.column());
@@ -308,7 +308,7 @@ QString WebItemViewDelegate::elementId(const QModelIndex& index) const
     }
 }
 
-QWebElement WebItemViewDelegate::elementForIndex(const QModelIndex &index, bool createElement) const
+QWebElement WebItemDelegate::elementForIndex(const QModelIndex &index, bool createElement) const
 {
     if (!index.isValid())
     {
@@ -323,12 +323,12 @@ QWebElement WebItemViewDelegate::elementForIndex(const QModelIndex &index, bool 
 
     if (element.isNull() && createElement)
     {
-        element = const_cast<WebItemViewDelegate*>(this)->createItem(index);
+        element = const_cast<WebItemDelegate*>(this)->createItem(index);
     }
     return element;
 }
 
-void WebItemViewDelegate::updateItemData(QWebElement element, const QModelIndex& index)
+void WebItemDelegate::updateItemData(QWebElement element, const QModelIndex& index)
 {
     QString role = element.attribute("data-role");
     QString roleAttr = element.attribute("data-role-attribute");
@@ -355,7 +355,7 @@ void WebItemViewDelegate::updateItemData(QWebElement element, const QModelIndex&
     }
 }
 
-QWebElement WebItemViewDelegate::createItem(const QModelIndex& index)
+QWebElement WebItemDelegate::createItem(const QModelIndex& index)
 {
     QString content = m_itemFactory->itemTemplate(index);
     QString classList = m_itemFactory->itemClasses(index).join(" ");
@@ -374,7 +374,7 @@ QWebElement WebItemViewDelegate::createItem(const QModelIndex& index)
 }
 
 // copied from StyledItemDelegate::drawBackground()
-void WebItemViewDelegate::drawBackground(
+void WebItemDelegate::drawBackground(
     QPainter* painter,
     const QStyleOptionViewItem& option,
     const QModelIndex& index
@@ -404,7 +404,7 @@ void WebItemViewDelegate::drawBackground(
 	}
 }
 
-QPair<QModelIndex, QModelIndex> WebItemViewDelegate::visibleIndexes() const
+QPair<QModelIndex, QModelIndex> WebItemDelegate::visibleIndexes() const
 {
 	const QRect viewportRect = m_view->viewport()->rect();
 	QModelIndex topVisibleIndex = m_view->indexAt(QPoint(0,0));
@@ -421,7 +421,7 @@ QPair<QModelIndex, QModelIndex> WebItemViewDelegate::visibleIndexes() const
 	return qMakePair(topVisibleIndex, bottomVisibleIndex);
 }
 
-void WebItemViewDelegate::webSceneRepaint(const QRect & _webPageRect)
+void WebItemDelegate::webSceneRepaint(const QRect & _webPageRect)
 {
 	QRect webPageRect(_webPageRect);
 	webPageRect.translate(m_webPage->mainFrame()->scrollPosition());
@@ -443,7 +443,7 @@ void WebItemViewDelegate::webSceneRepaint(const QRect & _webPageRect)
 	m_view->viewport()->update(dirtyRegion);
 }
 
-void WebItemViewDelegate::viewScrolled()
+void WebItemDelegate::viewScrolled()
 {
 	// scroll the web page so that the element corresponding to the first visible element in
 	// the item view is at the top of the web page.
@@ -454,7 +454,7 @@ void WebItemViewDelegate::viewScrolled()
 	m_webPage->mainFrame()->setScrollPosition(mapToWebPagePos(QPoint(0,0)));
 }
 
-void WebItemViewDelegate::positionDomNode(QWebElement element, const QModelIndex& index)
+void WebItemDelegate::positionDomNode(QWebElement element, const QModelIndex& index)
 {
 	QRect itemRect = m_view->visualRect(index);
 
@@ -467,7 +467,7 @@ void WebItemViewDelegate::positionDomNode(QWebElement element, const QModelIndex
 	element.setStyleProperty("height", QString::number(itemRect.height()));
 }
 
-void WebItemViewDelegate::setDomNodeVisible(QWebElement element, bool visible)
+void WebItemDelegate::setDomNodeVisible(QWebElement element, bool visible)
 {
 	QString displayMode;
 	if (!visible) {
@@ -476,7 +476,7 @@ void WebItemViewDelegate::setDomNodeVisible(QWebElement element, bool visible)
 	element.setStyleProperty("display", displayMode);
 }
 
-void WebItemViewDelegate::layoutAllDomNodes()
+void WebItemDelegate::layoutAllDomNodes()
 {
 	Q_FOREACH(const QModelIndex& index, m_visibleIndexes)
 	{
@@ -502,7 +502,7 @@ void WebItemViewDelegate::layoutAllDomNodes()
 	m_visibleIndexElements = visibleElementCache;
 }
 
-void WebItemViewDelegate::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected)
+void WebItemDelegate::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected)
 {
 	Q_FOREACH(const QModelIndex& index, selected.indexes())
 	{

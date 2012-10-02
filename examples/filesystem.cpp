@@ -1,7 +1,8 @@
-#include "testwebitemview.h"
+#include "filesystem.h"
 
 #include "WebItemDelegate.h"
 
+#include <QtGui/QApplication>
 #include <QtGui/QStringListModel>
 #include <QtGui/QTreeView>
 #include <QtGui/QVBoxLayout>
@@ -74,5 +75,12 @@ void TestWebItemView::openLink(const QUrl& url)
     QDesktopServices::openUrl(url);
 }
 
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
 
+    TestWebItemView w;
+    w.show();
+    return a.exec();
+}
 

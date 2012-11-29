@@ -237,6 +237,8 @@ QWebElement WebItemDelegate::pageStyleElement()
 
 void WebItemDelegate::modelChanged()
 {
+    Q_ASSERT_X(model(), "WebItemDelegate::modelChanged", "The view has no model set");
+
     m_roleNameToValue.clear();
 
     QHashIterator<int, QByteArray> iter(m_view->model()->roleNames());

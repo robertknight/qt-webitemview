@@ -34,6 +34,11 @@ class WebItemFactory
           * This allows items with the same HTML template to have different appearances.
           */
         virtual QStringList itemClasses(const QModelIndex& index);
+
+        /** Returns true if item templates should be re-created when an item's data changes.
+          * Defaults to true.
+          */
+        virtual bool recreateItemOnDataChange(const QModelIndex& index) const;
 };
 
 /** A helper which monitors a QAbstractItemView and provides notifications
@@ -96,6 +101,7 @@ class WebItemDelegate : public QStyledItemDelegate
         void viewScrolled();
         void selectionChanged(const QItemSelection&, const QItemSelection&);
         void layoutAllDomNodes();
+        void modelDataChanged(const QModelIndex&, const QModelIndex&);
 
         void viewDestroyed();
 
@@ -115,6 +121,7 @@ class WebItemDelegate : public QStyledItemDelegate
         QPoint mapToWebPagePos(const QPoint& pos);
         void positionDomNode(QWebElement element, const QModelIndex &index);
         void setDomNodeVisible(QWebElement element, bool visible);
+        void removeElementForIndex(const QModelIndex& index);
 
         QHash<QString, int> m_roleNameToValue;
         WebItemFactory* m_itemFactory;

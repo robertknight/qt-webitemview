@@ -21,6 +21,11 @@ QStringList WebItemFactory::itemClasses(const QModelIndex &index)
     return QStringList();
 }
 
+bool WebItemFactory::recreateItemOnDataChange(const QModelIndex&) const
+{
+    return false;
+}
+
 WebItemDelegate::WebItemDelegate(WebItemFactory* factory, QObject *parent)
     : QStyledItemDelegate(parent)
     , m_itemFactory(factory)
@@ -237,7 +242,7 @@ QWebElement WebItemDelegate::pageStyleElement()
 
 void WebItemDelegate::modelChanged()
 {
-    Q_ASSERT_X(model(), "WebItemDelegate::modelChanged", "The view has no model set");
+    Q_ASSERT_X(m_view->model(), "WebItemDelegate::modelChanged", "The view has no model set");
 
     m_roleNameToValue.clear();
 
@@ -245,6 +250,26 @@ void WebItemDelegate::modelChanged()
     while (iter.hasNext()) {
         iter.next();
         m_roleNameToValue.insert(QString(iter.value()), iter.key());
+    }
+
+    connect(m_view->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
+            this, SLOT(modelDataChanged(QModelIndex,QModelIndex)));
+}
+
+void WebItemDelegate::modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight)
+{
+    for (int row = topLeft.row(); row <= bottomRight.row(); row++) {
+        for (int column = topLeft.column(); column <= bottomRight.column(); column++) {
+            QModelIndex index = m_view->model()->index(row, column, topLeft.parent());
+            QWebElement element = elementForIndex(index, false /* do not auto-create element */);
+            if (m_itemFactory->recreateItemOnDataChange(index)) {
+                removeElementForIndex(index);
+                elementForIndex(index, true /* re-create element */);
+            }
+            else if (!element.isNull()) {
+                updateItemData(element, index);
+            }
+        }
     }
 }
 
@@ -291,6 +316,15 @@ QString WebItemDelegate::elementId(const QModelIndex& index) const
         return elementId(parentIndex) + '-' + id;
     } else {
         return id;
+    }
+}
+
+void WebItemDelegate::removeElementForIndex(const QModelIndex& index)
+{
+    QWebElement element = elementForIndex(index, false /* do not auto-create element */);
+    if (!element.isNull()) {
+        m_visibleIndexElements.remove(index);
+        element.takeFromDocument();
     }
 }
 

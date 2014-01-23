@@ -235,7 +235,7 @@ QWebElement WebItemDelegate::pageStyleElement()
     QWebElement element = m_webPage->mainFrame()->findFirstElement("#page-style");
     if (element.isNull()) {
         m_webPage->mainFrame()->findFirstElement("HEAD").appendInside("<style id='page-style'></style>");
-        return pageStyleElement();
+        return m_webPage->mainFrame()->findFirstElement("#page-style");
     }
     return element;
 }
